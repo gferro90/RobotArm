@@ -136,7 +136,7 @@ bool RobotArmGAM::Initialise(StructuredDataI &data) {
         Vector < float32 > kpVec(pid[0], numberOfMotors);
         if (!data.Read("Kp", kpVec)) {
             REPORT_ERROR(ErrorManagement::Warning, "Kp undefined: using 0 by default");
-            for (uint32 k = 1u; k < numberOfMotors; k++) {
+            for (uint32 k = 0u; k < numberOfMotors; k++) {
                 (pid[0])[k] = 0u;
             }
         }
@@ -145,7 +145,7 @@ bool RobotArmGAM::Initialise(StructuredDataI &data) {
         Vector < float32 > kiVec(pid[1], numberOfMotors);
         if (!data.Read("Ki", kiVec)) {
             REPORT_ERROR(ErrorManagement::Warning, "Ki undefined: using 0 by default");
-            for (uint32 k = 1u; k < numberOfMotors; k++) {
+            for (uint32 k = 0u; k < numberOfMotors; k++) {
                 (pid[1])[k] = 0u;
             }
         }
@@ -154,7 +154,7 @@ bool RobotArmGAM::Initialise(StructuredDataI &data) {
         Vector < float32 > kdVec(pid[2], numberOfMotors);
         if (!data.Read("Kd", kdVec)) {
             REPORT_ERROR(ErrorManagement::Warning, "Kd undefined: using 0 by default");
-            for (uint32 k = 1u; k < numberOfMotors; k++) {
+            for (uint32 k = 0u; k < numberOfMotors; k++) {
                 (pid[2])[k] = 0u;
             }
         }
@@ -162,7 +162,7 @@ bool RobotArmGAM::Initialise(StructuredDataI &data) {
         Vector < uint32 > endSwitchBoundVec(endSwitchBound, numberOfMotors);
         if (!data.Read("EndSwitchBound", endSwitchBoundVec)) {
             REPORT_ERROR(ErrorManagement::Warning, "EndSwitchBound undefined: using 10 by default");
-            for (uint32 k = 1u; k < numberOfMotors; k++) {
+            for (uint32 k = 0u; k < numberOfMotors; k++) {
                 (endSwitchBound)[k] = 10u;
             }
         }
@@ -255,33 +255,35 @@ void RobotArmGAM::Setup() {
 
 void RobotArmGAM::ConvertToPwm(float32 u,
                                uint32 i) {
-    /*    int32 step = encoders[i] - encoderStore[i];
-     // giving voltage but the motor is hold
-     if ((step == 0u) && (AbsVal(u) >= minControl[i])) {
-     endSwitchCounter[i]++;
-     //blocked for an amount of cycles
-     if (endSwitchCounter[i] > endSwitchBound[i]) {
-     endSwitchCounter[i] = endSwitchBound[i];
+    int32 step = encoders[i] - encoderStore[i];
+    int32 error = (int32)(references[i] - encoders[i]);
 
-     if (u * endSwitch[i] >= 0) {
-     endSwitch[i] = (u > 0) ? (1) : (-1);
-     u = 0.;
-     }
-     // moving in the other direction... set as unblocked
-     else {
-     endSwitch[i] = 0;
-     endSwitchCounter[i] = 0;
-     }
-     }
-     }
-     else {
-     endSwitch[i] = 0;
-     endSwitchCounter[i] = 0;
-     }*/
+    // giving voltage but the motor is hold
+    if ((step == 0u) && (AbsVal(u) > minControl[i])) {
+        endSwitchCounter[i]++;
+        //blocked for an amount of cycles
+        if (endSwitchCounter[i] > endSwitchBound[i]) {
+            endSwitchCounter[i] = endSwitchBound[i];
+
+            if ((u * endSwitch[i] >= 0) && (error == errorStore[i])) {
+                endSwitch[i] = (u > 0) ? (1) : (-1);
+                u = 0.;
+            }
+            // moving in the other direction... set as unblocked
+            else {
+                endSwitch[i] = 0;
+                endSwitchCounter[i] = 0;
+            }
+        }
+    }
+    else {
+        endSwitch[i] = 0;
+        endSwitchCounter[i] = 0;
+    }
     //map the control on pwm
-    float32 uRange = maxControl[i] - minControl[i];
+    float32 uRange = maxControl[i]-minControl[i];
     uint32 pwmRange = maxPwm[i] - minPwm[i];
-    int32 pwms_temp = (int32)(minPwm[i] + ((u - minControl[i]) / uRange) * pwmRange);
+    int32 pwms_temp = (int32)(SignVal(u) * minPwm[i] + ((u-SignVal(u)*minControl[i]) / uRange) * pwmRange);
 
     // REPORT_ERROR_PARAMETERS(ErrorManagement::Warning, "Here 2 %d",pwms_temp);
     if (pwms_temp < 0) {
@@ -293,6 +295,8 @@ void RobotArmGAM::ConvertToPwm(float32 u,
     }
     //REPORT_ERROR_PARAMETERS(ErrorManagement::Warning, "Here 3 %d",pwms[i]);
     encoderStore[i] = encoders[i];
+    errorStore[i] = error;
+
 }
 
 void RobotArmGAM::ExecuteHomeState(uint32 i) {
@@ -335,11 +339,12 @@ void RobotArmGAM::ExecuteControlState(uint32 i,
     if (AbsVal(u) > maxControl[i]) {
         u = SignVal(u) * maxControl[i];
     }
-    if (AbsVal(u) < minControl[i]) {
+    //REPORT_ERROR_PARAMETERS(ErrorManagement::Warning, "u: %f, mc: %f", u, minControl[i]);
+    /*if (AbsVal(u) < minControl[i]) {
         u = 0.;
-    }
+    }*/
+
     ConvertToPwm(u, i);
-    errorStore[i] = error;
 
 }
 
@@ -378,9 +383,8 @@ bool RobotArmGAM::Execute() {
     else {
         currentState = fromUsb[1];
         if (currentState == -1) {
-            SM_changeState=1;
-            SM_nextState=-1;
-            REPORT_ERROR(ErrorManagement::FatalError,"Turn off the board");
+            SM_changeState = 1;
+            SM_nextState = -1;
         }
         else {
             for (uint32 i = 0u; i < numberOfMotors; i++) {

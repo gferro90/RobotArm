@@ -56,9 +56,6 @@ void BasicScheduler::StartExecution() {
     while (!SM_changeState) {
         //run the first thread
         Cycle(0);
-        if(SM_changeState){
-            REPORT_ERROR(ErrorManagement::FatalError,"Stopping Scheduler");
-        }
     }
 }
 

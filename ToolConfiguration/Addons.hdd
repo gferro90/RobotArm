@@ -10,13 +10,19 @@ struct identifier{
 
 const struct identifier ids[]={
 	{"ADC1", &hadc1},
-	{"TIM6", &htim6},
-	{"TIM4", &htim4},
+	{"TIM1", &htim1},
 	{"TIM2", &htim2},
+	{"TIM3", &htim3},
+	{"TIM4", &htim4},
+    {"TIM5", &htim5},
+	{"TIM6", &htim6},
+	{"TIM9", &htim9},
 	{"UART2", &huart2},
+	{"SPI1", &hspi1},
 	{"SPI2", &hspi2},
 	{"GPIOD", GPIOD},
 	{"GPIOC", GPIOC},
+	{"GPIOE", GPIOE},
 	{0,0}
 }; 
 

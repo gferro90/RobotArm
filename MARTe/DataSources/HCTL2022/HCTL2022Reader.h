@@ -33,7 +33,7 @@
 /*---------------------------------------------------------------------------*/
 #include "MemoryMapInputBroker.h"
 #include "stm32f4xx_hal.h"
-
+#include "HCTL2022.h"
 
 using namespace MARTe;
 

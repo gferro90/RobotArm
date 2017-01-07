@@ -1,0 +1,170 @@
+\documentclass[a4paper, 12pt]{report}
+\usepackage[utf8x]{inputenc}
+\usepackage[italian]{babel}
+\usepackage[T1]{fontenc}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage[centertags]{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{newlfont}
+\usepackage{fancyhdr}
+\usepackage{tesisty}
+\usepackage{listings}
+\usepackage{color}
+
+
+   	\lstdefinestyle{customc}{
+   	  belowcaptionskip=1\baselineskip,
+   	  breaklines=true,
+   	  frame=L,
+   	  xleftmargin=\parindent,
+   	  language=C,
+   	  showstringspaces=false,
+   	  basicstyle=\footnotesize\ttfamily,
+   	  keywordstyle=\bfseries\color{red},
+   	  commentstyle=\itshape\color{green},
+   	  identifierstyle=\color{black},
+   	  stringstyle=\color{blue},
+   	}
+   	
+   	\lstdefinestyle{customasm}{
+   	  belowcaptionskip=1\baselineskip,
+   	  frame=L,
+   	  xleftmargin=\parindent,
+   	  language=[x86masm]Assembler,
+   	  basicstyle=\footnotesize\ttfamily,
+   	  commentstyle=\itshape\color{purple!40!black},
+   	}
+   	\lstset{escapechar=@,style=customc}
+
+%-------------------------------
+% DEFINIZIONE DEGLI ENVIRONMENT
+%-------------------------------
+
+\newtheorem{obs}{Osservazione}[section]
+\newenvironment{oss}
+    {\begin{obs}\begin{normalfont}}
+    {\hfill $\square \!\!\!\!\checkmark$ \end{normalfont}\end{obs}}
+
+\newtheorem{pro}{Problema}[chapter]
+\newenvironment{prob}
+    {\begin{pro}\begin{normalfont}}
+    {\hfill $\spadesuit$ \end{normalfont}\end{pro}}
+
+\newtheorem{teor}{Teorema}[section]
+\newenvironment{teorema}
+    {\begin{teor}\textit }
+    {\hfill  \end{teor}}
+
+\newtheorem{defn}{Definizione}[section]
+\newenvironment{de}
+    {\begin{defn}\begin{normalfont}}
+    {\hfill $\clubsuit$ \end{normalfont}\end{defn}}
+
+%-----------------------------
+% CONFIGURAZIONE DELLA PAGINA
+%-----------------------------
+
+\hfuzz2pt % Don't bother to report over-full boxes if over-edge is < 2pt
+
+\fancypagestyle{plain}{
+\fancyhead{}\renewcommand{\headrulewidth}{0pt} } \pagestyle{fancy}
+\renewcommand{\chaptermark}[1]{\markboth{\small CAP. \thechapter \textit{ #1}} {} }
+\renewcommand{\sectionmark}[1]{\markright{\small  \thesection \textit{ #1}} {} }
+\voffset=-20pt    % distanza tra il limite superiore del foglio e l'intestazione
+\headsep=40pt     % distanza  l'intestazione ed il testo del corpo
+\hoffset=0 pt     % misura equivalente al margine sinistro
+\textheight=620pt % altezza del corpo del testo
+\textwidth=435pt  % larghezza del corpo del testo
+\footskip=40pt    % distanza tra il testo del corpo ed il pie' di pagina
+\fancyhead{}      % cancella qualsiasi impostazione per l'intestazione
+\fancyfoot{}      % cancella qualsiasi impostazione per il pie' di pagina
+\headwidth=435pt  % larghezza del'intestazione e del pie' di pagina
+\fancyhead[R]{\rightmark} \fancyfoot[L]{\leftmark}
+\fancyfoot[R]{\thepage}
+\renewcommand{\headrulewidth}{0.3pt}   % spessore della linea dell'intestazione
+\renewcommand{\footrulewidth}{0.3pt}   % spessore della linea del pi�di pagina
+
+\numberwithin{equation}{section}
+\renewcommand{\theequation}{\thesection.\arabic{equation}}
+
+
+
+
+%--------------------------
+% MODIFICARE DA QUI IN POI
+%--------------------------
+
+\begin{document}
+
+\dedicate{Inserire la dedica}
+
+\corso{DELL'AUTOMAZIONE} \titoloTesi{CHOPPER ASYMMETRY IN INTEGRATOR DESIGN} \anno{February 2015}
+\relatore{}
+ \autore{Giuseppe Ferr�}
+\correlatore{}
+
+\baselineskip=15pt
+
+%\intestazione
+
+%------------------------------------------------
+% INTRODUZIONE E RINGRAZIAMENTI (NON MODIFICARE)
+%------------------------------------------------
+
+\fancypagestyle{plain}{
+\fancyhead{}\renewcommand{\headrulewidth}{0pt} } \pagestyle{fancy}
+\renewcommand{\chaptermark}[1]{\markboth{\small Cap. \thechapter \textit{ #1}} {} }
+\renewcommand{\sectionmark}[1]{\markright{\small  \S \thesection \textit{ #1}} {} }
+\voffset=-20pt                         % distanza tra il limite superiore del foglio e l'intestazione
+\headsep=40pt                          % distanza  l'intestazione ed il testo del corpo
+\hoffset=0pt                           % misura equivalente al margine sinistro
+\textheight=620pt                      % altezza del corpo del testo
+\textwidth=435pt                       % larghezza del corpo del testo
+\footskip=40pt                         % distanza tra il testo del corpo ed il pie' di pagina
+\fancyhead{}                           % cancella qualsiasi impostazione per l'intestazione
+\fancyfoot{}                           % cancella qualsiasi impostazione per il pie' di pagina
+\headwidth=435pt                       % larghezza del'intestazione e del pie' di pagina
+\fancyhead[R]{\rightmark} \fancyfoot[L]{\leftmark}
+\fancyfoot[R]{\thepage}
+\renewcommand{\headrulewidth}{0.3pt}   % spessore della linea dell'intestazione
+\renewcommand{\footrulewidth}{0.3pt}   % spessore della linea del pi�di pagina
+
+\pagenumbering{Roman} \tableofcontents
+\newpage
+
+\pagenumbering{arabic}
+
+\fancyhead[R]{Introduzione} \fancyfoot[L]{Introduzione}
+\fancyfoot[R]{\thepage}
+
+%\include{Introduzione}
+
+\fancyhf{} %elimina header/footer vecchi
+
+
+\fancyhead[R]{\rightmark} \fancyhead[L]{\leftmark}
+\fancyfoot[R]{\thepage}
+
+
+
+
+
+%---------------------
+% INCLUSIONE CAPITOLI
+%---------------------
+
+\include{capitolo0}
+%\include{capitolo1}
+%\include{capitolo2}
+%\include{conclusioni}
+%\include{appendice}
+
+
+
+
+
+
+\end{document}

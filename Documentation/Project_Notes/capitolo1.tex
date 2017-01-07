@@ -1,0 +1,177 @@
+\chapter{Basi di latex}
+\label{chap:basi}
+
+\begin{minipage}{12cm}\textit{Se lo si desidera, utilizzare questo spazio per inserire un breve riassunto di ci\`o che verr\`a detto in questo capitolo. Inserire solo i punti salienti.}
+
+\end{minipage}
+
+\vspace*{1cm}
+
+\section{Sezionamento}
+\label{sec:sezioni}
+
+Per suddividere la tesi in LaTeX in vari sottocapitoli \`e sufficiente
+usare dei comandi specifici. In particolare \verb1\chapter{titolo}1
+inizia un nuovo capitolo, \verb1\section{titolo}1 un nuovo
+sottocapitolo e \verb1\subsection{titolo}1 un nuovo
+paragrafo. Tendenzialmente non occorre scendere ulteriormente nella
+struttura, in ogni caso esiste eventualmente anche il comando
+\verb1\subsubsection{titolo}1.\\ 
+
+Il modello della tesi \`e organizzato in modo da mantenere un unico
+file principale con tutti i comandi di base (impaginazione, nuovi
+environment...) denominato Tesi.tex, in modo che una volta modificato
+questo non sia pi\`u necessario mettervi mano, e un file distinto per
+ogni capitolo, denominato capitoloN.tex. Si consiglia di mantenere
+tale sistema in quanto semplice e allo stesso tempo efficiente, specie
+in fase di correzione.\\ 
+
+Nota bene: non occorre compilare ogni singolo capitoloN.tex, basta
+compilare Tesi.tex, che include tutti i capitoli scritti! L'importante
+\`e che ogni nuovo capitolo creato venga segnalato nel file Tesi.tex
+nella parte di ``inclusione capitoli'' con la direttiva
+\verb1include{capitoloN}1 (si noti che non \`e necessario inserire
+l'estensione .tex).\\ 
+
+
+
+\section{Le immagini}
+Per inserire immagini in latex si utilizza l'ambiente \texttt{figure}:\\
+
+\begin{verbatim}
+\begin{figure}[POS]
+        \centering
+        \includegraphics[width=Xcm]{imgs/NOME.eps}
+        \caption{Descrizione della figura.}
+        \label{fig-label-figura}
+\end{figure}
+\end{verbatim}
+
+\vspace*{1cm}
+
+\noindent dove al posto di POS va inserita una lettera a scelta tra \textit{h}, \textit{t} e \textit{b} che indicano in che posizione ``suggerire'' a LaTeX di inserire l'immagine, rispettivamente 'here', 'top' e 'bottom'. L'utilizzo pi\`u tipico \`e quello con la lettera \textit{h}, che indica di inserire l'immagine, se possibile, nella posizione corrente. Al posto di X va inserita la dimensione desiderata per l'immagine (in questo caso, width, per quanto riguarda la dimensione orizzontale; per specificare l'altezza bisogna utilizzare height). Caption indica il testo che verr\`a inserito sotto la figura e label come ci si riferir\`a alla figura. In questo caso, avendo definito la label di quest'immagine ``fig-label-figura'', per riferirsi ad essa (es.: ``vedi figura 2.4''...) nel file tex si sarebbe utilizzato il comando \verb1\ref{fig-label-figura}1.
+
+Si consiglia di usare immagini in formato EPS in quanto standard. Matlab permette di esportare grafici in tale formato, cos\`i come la maggior parte dei programmi di editing grafico per Linux o in generale open-source (GIMP, Dia...). Nel mondo Windows, Adobe Photoshop permette di esportare come EPS.\\
+
+Nel caso si voglia disporre la figura ruotata di 90 gradi a pagina intera (per esempio per riportare grossi grafici di Matlab), si usi l'ambiente \texttt{sidewaysfigure}:\\
+
+
+\begin{verbatim}
+\begin{sidewaysfigure}[POS]
+        \centering
+                \includegraphics[width=Xcm]{imgs/NOME.eps}
+        \caption{Descrizione della figura.}
+        \label{fig-label-figura}
+\end{sidewaysfigure}
+\end{verbatim}
+
+\vspace*{1cm}
+
+\section{Le tabelle}
+La sintassi con cui si inseriscono le tabelle \`e la seguente:\\
+\begin{verbatim}
+\begin{center}
+\begin{tabular}{COLS}
+CONTENT
+\end{tabular}
+\end{center}
+\end{verbatim}
+
+\noindent dove al posto di COLS va inserita la struttura delle colonne. Si tratta di una stringa composta dai caratteri l, r e c, che stanno rispettivamente per left, right e centre. Il carattere | impone di tracciare una divisione verticale. Per esempio scrivere ``lr|c'' equivale a chiedere a LaTeX di disegnare una tabella la cui prima colonna sia allineata a sinistra, la seconda a destra e la terza centrata, con una riga di separazione verticale tra la seconda e la terza colonna.\\
+Al posto di CONTENT vanno inseriti i dati da mettere nella tabella: per spostarsi tra le colonne si usa il carattere \verb1&1, per iniziare una nuova riga si usa \verb1\\1. Per esempio, usando la struttura delle colonne definita precedentemente, scrivere ``\verb1a & b & c\\1'' equivale a mettere a nella prima colonna, b nella seconda e c nella terza, iniziando quindi una nuova riga. Per inserire un divisore orizzontale si usa il comando \verb1\hline1.\\
+
+Esempio:\\
+
+\begin{verbatim}
+\begin{center}
+\begin{tabular}{lr|c}
+\textbf{a} & \textbf{b} & \textbf{c}\\
+\hline
+uno & due & tre\\
+x & y & z
+\end{tabular}
+\end{center}
+\end{verbatim}
+
+\noindent produce:\\
+
+\begin{center}
+\begin{tabular}{lr|c}
+\textbf{a} & \textbf{b} & \textbf{c}\\
+\hline
+uno & due & tre\\
+x & y & z
+\end{tabular}
+\end{center}
+
+
+\vspace*{1cm}
+
+
+
+\section{Osservazioni, teoremi et similia}
+\begin{oss}
+Questa \`e un'osservazione e si ottiene utilizzando la coppia:
+\begin{center}
+\begin{verbatim}
+\begin{oss}
+\end{oss}
+\end{verbatim}
+\end{center}
+\end{oss}
+
+\begin{prob}
+Questo \`e un problema e si ottiene utilizzando la coppia:
+\begin{center}
+\begin{verbatim}
+\begin{prob}
+\end{prob}
+\end{verbatim}
+\end{center}
+\end{prob}
+
+\begin{teorema}
+Questo \`e un teorema e si ottiene utilizzando la coppia:
+\begin{center}
+\begin{verbatim}
+\begin{teorema}
+\end{teorema}
+\end{verbatim}
+\end{center}
+\end{teorema}
+
+
+\begin{de}
+Questa \`e una definizione e si ottiene utilizzando la coppia:
+\begin{center}
+\begin{verbatim}
+\begin{de}
+\end{de}
+\end{verbatim}
+\end{center}
+\end{de}
+
+\vspace*{1cm}
+
+
+\section{La bibliografia}
+
+Per creare una bibliografia basta aggiungere elementi sulla falsariga di quelli gi\`a presenti nel file Tesi.tex.\\
+
+Un metodo alternativo molto pi\`u elegante ed efficace, specialmente quando si ha a che fare con una lunga bibliografia, si basa sull'utilizzo di un tool denominato ``bibtex''. Prima o poi aggiungeremo indicazioni dettagliate sul bibtex a questo template. 
+Per adesso lasciamo la scelta allo studente.
+
+\section{Note a pi\`e di pagina}
+Per inserire una nota a pi\`e di pagina basta usare il comando \verb1\footnote{testo della nota}1.\\
+
+Esempio: scrivere ``\verb1Prova\footnote{testo della nota.}1'' produce ``Prova\footnote{testo della nota.}''.
+
+\section{Suggerimenti vari per la scrittura della tesi}
+\begin{itemize}
+\item Tutte le caption di immagini, tabelle, note a pi\`e di pagina e similari vanno concluse con un punto;
+\item I grafici di Matlab tendono a venire poco chiari in fase di stampa a causa dello spessore limitato delle linee: per questo si consiglia di impostare ``LineWidth'' ad almeno due [\verb1plot(x,y,'LineWidth',2)]1, tanto pi\`u se si decide di usare lo stesso grafico anche per la presentazione della tesi!
+\item LaTeX generalmente posiziona le immagini in modo corretto. Tuttavia talvolta, specie dopo una lunga serie di inserimenti grafici separati da poco testo, tende ad accumulare le immagini in maniera decisamente poco estetica. In tale caso si usi il comando \verb1\clearpage1, che obbliga LaTeX ad impaginare tutte le immagini non ancora inserite prima di proseguire con l'elaborazione del resto del documento;
+\item Se talvolta il compilatore LaTeX sembra, specie in ambiente Linux, non trovare alcuni file, ci si ricordi che i nomi dei file in ambiente Unix sono case-sensitive. Per questo, nel caso si decida di lavorare contemporaneamente sotto Linux e Windows, si consiglia di mantenere tutti i nomi dei file creati lower-case;
+\item Capita alle volte che il file generato dal compilatore LaTeX contenga alcuni caratteri incomprensibili. Questo \`e in genere dovuto al fatto che sono stati inseriti nel file sorgente alcuni caratteri proibiti, come ad esempio il simbolo di grado centigrado, oppure delle lettere accentate;
+\item In talune distribuzioni (e con MikTeX) capita che la sillabazione di LaTeX non sia corretta. Ci\`o \`e dovuto al fatto che di default la sillabazione italiana \`e disabilitata. Per correggere questo fatto sotto MikTex basta eseguire l'utilit\`a di configurazione e attivare nella tab relativa la sillabazione italiana. Sotto Linux si usa invece l'utility \verb1texconfig1 per modificare la ``hyphenation'' di LaTeX.
+\end{itemize}

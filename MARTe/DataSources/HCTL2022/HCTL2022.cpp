@@ -35,6 +35,8 @@ extern "C" {
 void * GetHwHandle(const char*);
 }
 
+static const uint32 channelNames[] = { TIM_CHANNEL_1, TIM_CHANNEL_2, TIM_CHANNEL_3, TIM_CHANNEL_4 };
+
 /*---------------------------------------------------------------------------*/
 /*                           Static definitions                              */
 /*---------------------------------------------------------------------------*/
@@ -50,7 +52,7 @@ HCTL2022::HCTL2022() {
     sel = NULL;
     reset = NULL;
     byteReg = NULL;
-
+    clk = NULL;
     oePin = 0u;
     selPin = 0u;
     resetPin = 0u;
@@ -89,8 +91,8 @@ bool HCTL2022::Initialise(StructuredDataI &data) {
             StreamString resetId;
             ret = data.Read("RESET_Port", resetId);
             if (ret) {
-                reset= (GPIO_TypeDef *) GetHwHandle(resetId.Buffer());
-                ret = (reset!= NULL);
+                reset = (GPIO_TypeDef *) GetHwHandle(resetId.Buffer());
+                ret = (reset != NULL);
             }
             if (!ret) {
                 REPORT_ERROR(ErrorManagement::Warning, "No RESET port specified");
@@ -110,7 +112,7 @@ bool HCTL2022::Initialise(StructuredDataI &data) {
         if (ret) {
             ret = data.Read("OE_Pin", oePin);
             if (ret) {
-                ret = (oePin <16u);
+                ret = (oePin < 16u);
             }
             if (!ret) {
                 REPORT_ERROR(ErrorManagement::Warning, "No OE pin specified");
@@ -119,7 +121,7 @@ bool HCTL2022::Initialise(StructuredDataI &data) {
         if (ret) {
             ret = data.Read("SEL_Pin", selPin);
             if (ret) {
-                ret = (selPin <16u);
+                ret = (selPin < 16u);
             }
             if (!ret) {
                 REPORT_ERROR(ErrorManagement::Warning, "No SEL pin specified");
@@ -128,7 +130,7 @@ bool HCTL2022::Initialise(StructuredDataI &data) {
         if (ret) {
             ret = data.Read("RESET_Pin", resetPin);
             if (ret) {
-                ret = (resetPin <16u);
+                ret = (resetPin < 16u);
             }
             if (!ret) {
                 REPORT_ERROR(ErrorManagement::Warning, "No RESET pin specified");
@@ -140,11 +142,34 @@ bool HCTL2022::Initialise(StructuredDataI &data) {
                 REPORT_ERROR(ErrorManagement::Warning, "No ByteReg mask specified");
             }
         }
+        if (ret) {
+            StreamString clkId;
+            ret = data.Read("CLK_Id", clkId);
+            if (ret) {
+                clk = (TIM_HandleTypeDef *) GetHwHandle(clkId.Buffer());
+                ret = (clk != NULL);
+            }
+            if (!ret) {
+                REPORT_ERROR(ErrorManagement::Warning, "No CLK handle specified");
+            }
+        }
+        if (ret) {
+            ret = data.Read("CLK_Channel", clkChannel);
+            if (ret) {
+                //clock must be already configured!
+                HAL_TIM_PWM_Start(pwmHandlePtr, channelNames[clkChannel]);
+            }
+            if (!ret) {
+                REPORT_ERROR(ErrorManagement::Warning, "No CLK handle specified");
+            }
+
+        }
     }
 
-    WriteOE(1u);
-    reset->BSRR|=(1<<resetPin);
-
+    if (ret) {
+        WriteOE(1u);
+        reset->BSRR |= (1 << resetPin);
+    }
 
     return ret;
 }
@@ -193,7 +218,7 @@ const char8 *HCTL2022::GetBrokerName(StructuredDataI &data,
 bool HCTL2022::GetInputBrokers(ReferenceContainer &inputBrokers,
                                const char8* const functionName,
                                void * const gamMemPtr) {
-    ReferenceT < HCTL2022Reader > broker("HCTL2022Reader");
+    ReferenceT<HCTL2022Reader> broker("HCTL2022Reader");
     bool ret = broker.IsValid();
     if (ret) {
         ret = broker->Init(InputSignals, *this, functionName, gamMemPtr);
@@ -216,33 +241,31 @@ bool HCTL2022::PrepareNextState(const char8 * const currentStateName,
 }
 
 void HCTL2022::WriteOE(uint8 val) {
-    (val)?(oe->BSRR|=(1<<oePin)):(oe->BSRR|=(1<<(16+oePin)));
+    (val) ? (oe->BSRR |= (1 << oePin)) : (oe->BSRR |= (1 << (16 + oePin)));
 }
 
 void HCTL2022::WriteSEL(uint8 val) {
-    (val)?(sel->BSRR|=(1<<oePin)):(sel->BSRR|=(1<<(16+oePin)));
+    (val) ? (sel->BSRR |= (1 << oePin)) : (sel->BSRR |= (1 << (16 + oePin)));
 }
 
-void Reset(){
-    reset->BSRR|=(1<<(16+resetPin));
+void Reset() {
+    reset->BSRR |= (1 << (16 + resetPin));
     //TODO delay?
-    reset->BSRR|=(1<<(resetPin));
+    reset->BSRR |= (1 << (resetPin));
 
 }
-
 
 uint8 HCTL2022::ReadByte() {
-    uint16 regPort=byteReg->IDR;
-    uint8 ret=0u;
-    uint8 cnt=0u;
-    for(uint8 i=0u; i<16u; i++){
-        if((byteRegMask>>i)&0x1){
-            ret|=(((regPort>>i)&0x1u)<<cnt);
+    uint16 regPort = byteReg->IDR;
+    uint8 ret = 0u;
+    uint8 cnt = 0u;
+    for (uint8 i = 0u; i < 16u; i++) {
+        if ((byteRegMask >> i) & 0x1) {
+            ret |= (((regPort >> i) & 0x1u) << cnt);
             cnt++;
         }
     }
     return ret;
 }
-
 
 CLASS_REGISTER(HCTL2022, "1.0")

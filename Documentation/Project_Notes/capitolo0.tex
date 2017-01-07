@@ -1,0 +1,32 @@
+
+
+\chapter{}
+\vspace*{1cm}
+
+\section{Phase 1}
+\subsection{Hardware}
+\begin{itemize}
+\item Scorbot robotic arm. \\
+   This five degrees robotic arm consists in five 12V-(0.5-1A) motors plus the motor driving the gripper. They move respectively base, shoulder, elbow joints and the last two motors are coupled handling the pitch and roll movements. A quadrature optical encoder has been mounted on the axis of each motor in order to measure the angular position. There is also an end switch sensor for each motor due to obtain the initial position (usually called home position) for the robotic arm in which encoders can be zeroed. The interface is a D50 pin connector containing direct wires with motors, encoders and end switches.
+ 
+\item STM32F4-discovery
+  \begin{itemize}
+  \item TIM6: drives the HighResolutionTimer and can be used as a synchronisation point for the execution cycle.
+  \item TIM4-TIM9: drives the PWM generators. Four channels for TIM4 and two channels for TIM9 can handle all the six motors of the scorbot.
+  \item TIM1: can be used as clock source for external encoder counters. The pwm generator channel 4 has been enabled.
+  \item TIM(2,3,5): have been used as internal encoder 16-bit counters with no interrupts.
+  \item ADC1: five channels 2-3-4-8-9 have been activated in order to measure the current dissipated by the five motors for a further torque control.
+  \item SPI1-SPI2: have been enabled in order to manage further external communications with serial encoder counters.
+  \item D0-D3 pins: set as output pins have been used for OE and SEC pins for the two external encoder counters (HCTL2022 chip).
+  \item D(4,7,8,9,10,11) pins: set as output pins they have been used to set the direction of the six motors.
+  \item E9-E13 pins: set as input pull-up pins they have been set to read the microswitches inputs (low active).
+  \item C0-C15 pins: set as input pull-up pins they have been set to read two 8-bit ports from external encoder counters (HCTL2022 chip).
+  \item USART2: pins D5=Tx and D6=Rx is used as the error stream flushing error messages.
+  \item USB-OTG-FS: uses the pins A11 and A12. This stream is used to get the RT diagnostic from any device listening on the USB port and to get eventual data such as references or control signals directly (depending by the application).
+  \end{itemize}
+\item HCTL2022: is an external parallel 32-bit encoder counter. The OE pin is active low disabling the writing on the chip internal registers in order to read the counter in a stable mode and there are two SEL pins used to select the four bytes to be read. Now a single SEL pin has been used because a 16 bit counter is sufficient for this application. The other SEL pin has to be grounded. As we can see in the STM32 pinout a pwm generator has been set in order to provide an external clock to this chip. Three internal encoder counters have been activated in the STM32 board, so we need two more external counter in order to handle the five scorbot motors without using interrupts disturbing the real time execution.
+
+\item L298N H-bridge: each one of these can be used to drive two DC motors with less than 2A continuous current. For the scorbot three of them have been used to handle the six motors. For each motor we use an output pin selecting the motor direction and a pwm signal for the motor speed. The current strategy to drive the motor is low direction pin and normal pwm for left-to-right direction and high direction pin and the opposite of pwm signal for right-to-left direction. This strategy minimizes the number of pins used to drive each motor. 
+ \end{itemize}
+\subsection{Software}
+ 

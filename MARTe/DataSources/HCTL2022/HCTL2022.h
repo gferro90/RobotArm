@@ -92,6 +92,7 @@ private:
     uint8 selPin;
     uint8 resetPin;
     uint16 byteRegMask;
+    uint8 clkChannel;
 };
 
 /*---------------------------------------------------------------------------*/

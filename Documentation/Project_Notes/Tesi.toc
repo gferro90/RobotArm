@@ -1,0 +1,6 @@
+\select@language {italian}
+\select@language {italian}
+\contentsline {chapter}{\numberline {1}}{1}
+\contentsline {section}{\numberline {1.1}Phase 1}{1}
+\contentsline {subsection}{\numberline {1.1.1}Hardware}{1}
+\contentsline {subsection}{\numberline {1.1.2}Software}{2}

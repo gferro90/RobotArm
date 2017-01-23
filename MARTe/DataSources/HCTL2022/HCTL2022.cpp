@@ -30,6 +30,7 @@
 /*---------------------------------------------------------------------------*/
 
 #include "HCTL2022.h"
+#include "HCTL2022Reader.h"
 
 extern "C" {
 void * GetHwHandle(const char*);
@@ -57,6 +58,7 @@ HCTL2022::HCTL2022() {
     selPin = 0u;
     resetPin = 0u;
     byteRegMask = 0u;
+    clkChannel=0u;
 }
 
 HCTL2022::~HCTL2022() {
@@ -70,7 +72,7 @@ bool HCTL2022::Initialise(StructuredDataI &data) {
         StreamString oeId;
         ret = data.Read("OE_Port", oeId);
         if (ret) {
-            oe = (GPIO_TypeDef *) GetHwHandle(oe.Buffer());
+            oe = (GPIO_TypeDef *) GetHwHandle(oeId.Buffer());
             ret = (oe != NULL);
         }
         if (!ret) {
@@ -157,7 +159,7 @@ bool HCTL2022::Initialise(StructuredDataI &data) {
             ret = data.Read("CLK_Channel", clkChannel);
             if (ret) {
                 //clock must be already configured!
-                HAL_TIM_PWM_Start(pwmHandlePtr, channelNames[clkChannel]);
+                HAL_TIM_PWM_Start(clk, channelNames[clkChannel]);
             }
             if (!ret) {
                 REPORT_ERROR(ErrorManagement::Warning, "No CLK handle specified");
@@ -168,7 +170,7 @@ bool HCTL2022::Initialise(StructuredDataI &data) {
 
     if (ret) {
         WriteOE(1u);
-        reset->BSRR |= (1 << resetPin);
+        Reset();
     }
 
     return ret;
@@ -248,7 +250,7 @@ void HCTL2022::WriteSEL(uint8 val) {
     (val) ? (sel->BSRR |= (1 << oePin)) : (sel->BSRR |= (1 << (16 + oePin)));
 }
 
-void Reset() {
+void HCTL2022::Reset() {
     reset->BSRR |= (1 << (16 + resetPin));
     //TODO delay?
     reset->BSRR |= (1 << (resetPin));

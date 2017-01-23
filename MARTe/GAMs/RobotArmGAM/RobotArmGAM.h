@@ -41,8 +41,9 @@ private:
 
     uint32 *timer;
     uint32 *encoders;
-    uint32 *dirs;
-    uint32 *pwms;
+    int8 *motorDirection;
+    int8 *counterDirection;
+    int32 *pwms;
     int32 *references;
     uint32 numberOfMotors;
     float32 *pid[3];
@@ -50,9 +51,7 @@ private:
     float32 *minControl;
     uint32 *maxPwm;
     uint32 *minPwm;
-    uint8 *dirIdx;
     uint8 *switchIdx;
-    uint16 dirPinMask;
     int32 *toUsb;
     int32 *fromUsb;
     int32 *int_e;

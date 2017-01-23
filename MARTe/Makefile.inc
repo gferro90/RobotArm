@@ -28,15 +28,15 @@
 OBJSX=	startup_main.x startup_stm32f407xx.x
 -include PlatformDefinitions
 
-SPB = ../ToolConfiguration.x GAMs/RobotArmGAM.x Scheduler.x ErrorManagement.x DataSources/ResetEncoderDataSource.x\
+SPB = ../ToolConfiguration.x GAMs/RobotArmGAM.x Scheduler.x ErrorManagement.x \
 	$(MARTE2_TOOLS)/DataSources/GPIO.x \
-	$(MARTE2_TOOLS)/DataSources/TIM.x \
-	$(MARTE2_TOOLS)/DataSources/Encoder.x \
+	$(MARTE2_TOOLS)/DataSources/Encoder_opt.x \
 	$(MARTE2_TOOLS)/DataSources/ADC_DMA.x \
-	$(MARTE2_TOOLS)/DataSources/PWM.x \
+	$(MARTE2_TOOLS)/DataSources/Externals/L298N.x \
 	$(MARTE2_TOOLS)/DataSources/Timer.x \
 	$(MARTE2_TOOLS)/DataSources/USBSignalDisplay.x \
-	$(MARTE2_TOOLS)/DataSources/USBCommunication.x
+	$(MARTE2_TOOLS)/DataSources/USBCommunication.x\
+	$(MARTE2_TOOLS)/DataSources/Externals/HCTL2022.x
 
 MAKEDEFAULTDIR=$(MARTE2_DIR)/MakeDefaults
 
@@ -75,18 +75,17 @@ LIBRARIES_STATIC = Build/ToolConfigurationLib.a
 LIBRARIES_STATIC += Build/RobotArmGAM.a
 LIBRARIES_STATIC += Build/Scheduler.a
 LIBRARIES_STATIC += Build/ErrorManagement.a
-LIBRARIES_STATIC += Build/ResetEncoderDataSource.a
 
 
 # Static platform libraries
 LIBRARIES_STATIC += $(MARTE2_TOOLS)/Build/TimerDataSource.a
 LIBRARIES_STATIC += $(MARTE2_TOOLS)/Build/ADC_DMADataSource.a
-LIBRARIES_STATIC += $(MARTE2_TOOLS)/Build/PWMDataSource.a
+LIBRARIES_STATIC += $(MARTE2_TOOLS)/Build/L298NDataSource.a
 LIBRARIES_STATIC += $(MARTE2_TOOLS)/Build/USBSignalDisplay.a
 LIBRARIES_STATIC += $(MARTE2_TOOLS)/Build/GPIODataSource.a
-LIBRARIES_STATIC += $(MARTE2_TOOLS)/Build/EncoderDataSource.a
-LIBRARIES_STATIC += $(MARTE2_TOOLS)/Build/TIMBase.a
+LIBRARIES_STATIC += $(MARTE2_TOOLS)/Build/Encoder_optDataSource.a
 LIBRARIES_STATIC += $(MARTE2_TOOLS)/Build/USBCommunication.a
+LIBRARIES_STATIC += $(MARTE2_TOOLS)/Build/HCTL2022DataSource.a
 
 
 # Static MARTe libraries

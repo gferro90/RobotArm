@@ -59,9 +59,9 @@ bool HCTL2022Reader::Execute() {
         if (copyTable != NULL_PTR(MemoryMapBrokerCopyTableEntry *)) {
             dsHandle->WriteSEL(0u);
             dsHandle->WriteOE(0u);
-            uint8 hi=dsHandle->ReadByte;
+            uint8 hi=dsHandle->ReadByte();
             dsHandle->WriteSEL(1u);
-            uint8 lo=dsHandle->ReadByte;
+            uint8 lo=dsHandle->ReadByte();
             dsHandle->WriteOE(1u);
 
             uint32 counter=(hi<<8)+lo;
@@ -78,7 +78,7 @@ bool HCTL2022Reader::Init(const SignalDirection direction,
                           void * const gamMemoryAddress) {
     bool ret = MemoryMapInputBroker::Init(direction, dataSourceIn, functionName, gamMemoryAddress);
     if (ret) {
-        dsHandle = dynamic_cast<HCTL2022>(dataSource);
+        dsHandle = dynamic_cast<HCTL2022*>(dataSource);
         ret = (dsHandle != NULL);
     }
     return ret;

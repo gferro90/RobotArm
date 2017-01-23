@@ -12,13 +12,15 @@
 #include "MemoryOperationsHelper.h"
 #include "usbd_cdc_if.h"
 
+//#define USB_ERROR
+
 using namespace MARTe;
 
 extern UART_HandleTypeDef *errorUartHandle;
 
 static char8 buffer[128] = { 0 };
 static char8 buffer2[128] = { 0 };
-#if 0
+#ifdef USB_ERROR
 void PrintStack(ThreadIdentifier &tid) {
     while (1) {
         MemoryOperationsHelper::Set(buffer2, 0, 128);
@@ -52,8 +54,10 @@ void DebugErrorProcessFunction(const MARTe::ErrorManagement::ErrorInformation &e
         USBOpen();
     }
     USBWrite(buffer, &size, 0);
+    USBSync();
 }
-#endif
+#else
+
 
 void PrintStack(ThreadIdentifier &tid) {
     while (1) {
@@ -85,3 +89,4 @@ void DebugErrorProcessFunction(const MARTe::ErrorManagement::ErrorInformation &e
     HAL_UART_Transmit(errorUartHandle, (uint8_t*) buffer, size, HAL_MAX_DELAY);
 
 }
+#endif

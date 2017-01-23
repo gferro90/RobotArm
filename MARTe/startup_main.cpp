@@ -114,6 +114,7 @@ static void MARTeAppLauncher(void const *ignored) {
 #endif
 
 static void MARTeAppLauncher(void const *ignored) {
+
     if (!USBInitialized()) {
         USBOpen();
     }
@@ -136,42 +137,72 @@ static void MARTeAppLauncher(void const *ignored) {
     godb = ObjectRegistryDatabase::Instance();
 
     if (ok) {
+        /*for (uint32 i = 0; i < 20; i++) {
+
+            REPORT_ERROR(ErrorManagement::Warning, "before Init");
+            Sleep::MSec(100);
+        }*/
         ok = godb->Initialise(cdb);
     }
 
     ReferenceT < RealTimeApplication > application;
     if (ok) {
+        /*for (uint32 i = 0; i < 20; i++) {
+
+            REPORT_ERROR(ErrorManagement::Warning, "Init done");
+            Sleep::MSec(100);
+        }*/
         application = godb->Find("Application1");
         ok = application.IsValid();
 
     }
 
     if (ok) {
+         /*for (uint32 i = 0; i < 20; i++) {
+
+         REPORT_ERROR(ErrorManagement::Warning, "Before config");
+         Sleep::MSec(100);
+         }*/
         ok = application->ConfigureApplication();
+        /*for (uint32 i = 0; i < 20; i++) {
+
+         REPORT_ERROR(ErrorManagement::Warning, "After config");
+         Sleep::MSec(100);
+         }*/
+
     }
 
     ReferenceContainer states;
     if (ok) {
         ok = application->GetStates(states);
-    }
-    for (;;) {
-        REPORT_ERROR(ErrorManagement::Warning, "Waiting initial packet...");
-        // wait from usb the trigger
-        size = 64;
-        USBRead(buffer, (uint32_t*) &size, 0);
-        USBSync();
-        SM_nextState = 0;
-        while (SM_nextState >= 0) {
-            if (ok) {
-                ok = application->PrepareNextState(states.Get(SM_nextState)->GetName());
-            }
 
-            if (ok) {
-                SM_changeState = 0;
-                application->StartExecution();
+        for (;;) {
+         //   for (uint32 i = 0; i < 20; i++) {
+
+            REPORT_ERROR(ErrorManagement::Warning, "Waiting initial packet...");
+           /* Sleep::MSec(100);
+            }*/
+
+            // wait from usb the trigger
+            size = 64;
+            USBRead(buffer, (uint32_t*) &size, 0);
+            USBSync();
+            SM_nextState = 0;
+
+            REPORT_ERROR(ErrorManagement::Warning, "Go on");
+
+            while (SM_nextState >= 0) {
+                if (ok) {
+                    ok = application->PrepareNextState(states.Get(SM_nextState)->GetName());
+                }
+
+                if (ok) {
+                    SM_changeState = 0;
+                    application->StartExecution();
+                }
             }
+            REPORT_ERROR(ErrorManagement::Warning, "OOOK!");
         }
-        REPORT_ERROR(ErrorManagement::Warning, "OOOK!");
     }
 
 }

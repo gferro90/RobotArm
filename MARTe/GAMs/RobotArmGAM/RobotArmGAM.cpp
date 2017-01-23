@@ -12,6 +12,12 @@
 /*---------------------------------------------------------------------------*/
 /*                           Static definitions                              */
 /*---------------------------------------------------------------------------*/
+
+#define DiagnosticsHeader 3
+#define DiagnosticsPerMotor 3
+
+#define AdjustCounterDirection(encoder, dir)  (uint32)((uint16) ((dir==-1)*0x10000+dir*encoder))
+
 extern uint32 sentPacketNumber;
 
 static float32 AbsVal(float32 u) {
@@ -33,11 +39,13 @@ RobotArmGAM::RobotArmGAM() {
     timer = NULL;
     encoders = NULL;
     pwms = NULL;
-    dirs = NULL;
+    motorDirection = NULL;
+    counterDirection = NULL;
     references = NULL;
     toUsb = NULL;
     fromUsb = NULL;
     switches = NULL;
+
     for (uint32 i = 0u; i < 3u; i++) {
         pid[i] = NULL;
     }
@@ -45,9 +53,7 @@ RobotArmGAM::RobotArmGAM() {
     minControl = NULL;
     maxPwm = NULL;
     minPwm = NULL;
-    dirIdx = NULL;
     switchIdx = NULL;
-    dirPinMask = 0u;
     tic = 0u;
 
     int_e = NULL;
@@ -87,8 +93,11 @@ RobotArmGAM::~RobotArmGAM() {
     if (minPwm != NULL) {
         delete[] minPwm;
     }
-    if (dirIdx != NULL) {
-        delete[] dirIdx;
+    if (motorDirection != NULL) {
+        delete[] motorDirection;
+    }
+    if (counterDirection != NULL) {
+        delete[] counterDirection;
     }
     if (switchIdx != NULL) {
         delete[] switchIdx;
@@ -112,7 +121,7 @@ RobotArmGAM::~RobotArmGAM() {
     }
 
     if (encoderStore != NULL) {
-        delete[] errorStore;
+        delete[] encoderStore;
     }
 }
 
@@ -167,32 +176,37 @@ bool RobotArmGAM::Initialise(StructuredDataI &data) {
             }
         }
 
-        ret = data.Read("DirPinMask", dirPinMask);
-        if (!ret) {
-            REPORT_ERROR(ErrorManagement::InitialisationError, "DirPinMask undefined");
-        }
-        else {
-            dirIdx = new uint8[numberOfMotors];
-            uint32 cnt = 0u;
-            for (uint32 i = 0u; i < 16 && cnt < numberOfMotors; i++) {
-                if ((dirPinMask & (1 << i)) != 0) {
-                    dirIdx[cnt] = i;
-                    cnt++;
-                }
+        motorDirection = new int8[numberOfMotors];
+        Vector < int8 > motorDirectionVec(motorDirection, numberOfMotors);
+        if (!data.Read("MotorDirection", motorDirectionVec)) {
+            REPORT_ERROR(ErrorManagement::Warning, "MotorDirection undefined: using 1 by default");
+            for (uint32 k = 0u; k < numberOfMotors; k++) {
+                (motorDirection)[k] = 1;
             }
         }
 
-        uint16 switchPinMask;
-        if (!data.Read("SwitchPinMask", switchPinMask)) {
-            REPORT_ERROR(ErrorManagement::Warning, "SwitchPinMask undefined: Home will stops when motors reach their ends");
+        counterDirection = new int8[numberOfMotors];
+        Vector < int8 > counterDirectionVec(counterDirection, numberOfMotors);
+        if (!data.Read("CounterDirection", counterDirectionVec)) {
+            REPORT_ERROR(ErrorManagement::Warning, "CounterDirection undefined: using 1 by default");
+            for (uint32 k = 0u; k < numberOfMotors; k++) {
+                (counterDirection)[k] = 1;
+            }
         }
-        else {
-            switchIdx = new uint8[numberOfMotors];
-            uint32 cnt = 0u;
-            for (uint32 i = 0u; i < 16 && cnt < numberOfMotors; i++) {
-                if ((switchPinMask & (1 << i)) != 0) {
-                    switchIdx[cnt] = i;
-                    cnt++;
+
+        if (ret) {
+            uint16 switchPinMask;
+            if (!data.Read("SwitchPinMask", switchPinMask)) {
+                REPORT_ERROR(ErrorManagement::Warning, "SwitchPinMask undefined: Home will stops when motors reach their ends");
+            }
+            else {
+                switchIdx = new uint8[numberOfMotors];
+                uint32 cnt = 0u;
+                for (uint32 i = 0u; i < 16 && cnt < numberOfMotors; i++) {
+                    if ((switchPinMask & (1 << i)) != 0) {
+                        switchIdx[cnt] = i;
+                        cnt++;
+                    }
                 }
             }
         }
@@ -235,14 +249,13 @@ bool RobotArmGAM::Initialise(StructuredDataI &data) {
 }
 
 void RobotArmGAM::Setup() {
-    //assign here the pointer to signals
+//assign here the pointer to signals
     timer = (uint32*) GetInputSignalsMemory();
     fromUsb = (int32*) (timer + 1);
     encoders = (uint32*) (fromUsb + 2u);
     switches = encoders + numberOfMotors;
-    dirs = (uint32*) GetOutputSignalsMemory();
-    pwms = dirs + 1u;
-    toUsb = (int32*) (pwms + numberOfMotors);
+    pwms = (int32*) GetOutputSignalsMemory();
+    toUsb = pwms + numberOfMotors;
     for (uint32 i = 0u; i < numberOfMotors; i++) {
         references[i] = 0u;
         int_e[i] = 0u;
@@ -255,18 +268,20 @@ void RobotArmGAM::Setup() {
 
 void RobotArmGAM::ConvertToPwm(float32 u,
                                uint32 i) {
-    int32 step = encoders[i] - encoderStore[i];
-    int32 error = (int32)(references[i] - encoders[i]);
 
-    // giving voltage but the motor is hold
-    if ((step == 0u) && (AbsVal(u) > minControl[i])) {
+    int32 step = encoders[i] - encoderStore[i];
+
+    u *= motorDirection[i];
+
+// giving voltage but the motor is hold
+    if ((step == 0) && (AbsVal(u) > minControl[i])) {
         endSwitchCounter[i]++;
         //blocked for an amount of cycles
         if (endSwitchCounter[i] > endSwitchBound[i]) {
             endSwitchCounter[i] = endSwitchBound[i];
 
-            if ((u * endSwitch[i] >= 0) && (error == errorStore[i])) {
-                endSwitch[i] = (u > 0) ? (1) : (-1);
+            if ((u * endSwitch[i] >= 0) && (references[i] - (errorStore[i] + encoderStore[i]) == 0)) {
+                endSwitch[i] = (u >= 0) ? (1) : (-1);
                 u = 0.;
             }
             // moving in the other direction... set as unblocked
@@ -277,34 +292,34 @@ void RobotArmGAM::ConvertToPwm(float32 u,
         }
     }
     else {
-        endSwitch[i] = 0;
-        endSwitchCounter[i] = 0;
+        if (endSwitchCounter[i] < endSwitchBound[i]) {
+            endSwitch[i] = 0;
+            endSwitchCounter[i] = 0;
+        }
+        else {
+            u = 0.;
+        }
     }
-    //map the control on pwm
-    float32 uRange = maxControl[i]-minControl[i];
-    uint32 pwmRange = maxPwm[i] - minPwm[i];
-    int32 pwms_temp = (int32)(SignVal(u) * minPwm[i] + ((u-SignVal(u)*minControl[i]) / uRange) * pwmRange);
 
-    // REPORT_ERROR_PARAMETERS(ErrorManagement::Warning, "Here 2 %d",pwms_temp);
-    if (pwms_temp < 0) {
-        pwms[i] = maxPwm[i] + pwms_temp; //invert the wave
-        *dirs |= 1 << dirIdx[i]; //set negative direction
-    }
-    else {
-        pwms[i] = pwms_temp;
-    }
-    //REPORT_ERROR_PARAMETERS(ErrorManagement::Warning, "Here 3 %d",pwms[i]);
+    //map the control on pwm
+    float32 uRange = maxControl[i] - minControl[i];
+    uint32 pwmRange = maxPwm[i] - minPwm[i];
+    pwms[i] = (int32)(SignVal(u) * minPwm[i] + ((u - SignVal(u) * minControl[i]) / uRange) * pwmRange);
+    // pwms[i] *= motorDirection[i];
+// REPORT_ERROR_PARAMETERS(ErrorManagement::Warning, "Here 2 %d",pwms_temp);
+
+//REPORT_ERROR_PARAMETERS(ErrorManagement::Warning, "Here 3 %d",pwms[i]);
     encoderStore[i] = encoders[i];
-    errorStore[i] = error;
+    errorStore[i] = references[i] - (int32)encoders[i];
 
 }
 
 void RobotArmGAM::ExecuteHomeState(uint32 i) {
-    //move until switch pin becomes high
+//move until switch pin becomes high
     float32 u = 0.;
-    //normally is equal to 1
+//normally is equal to 1
     if ((((*switches) >> switchIdx[i]) & (0x1u))) {
-        u = maxControl[i];
+        u = -maxControl[i];
     }
     ConvertToPwm(u, i);
 }
@@ -317,51 +332,55 @@ void RobotArmGAM::ExecuteBasicState(uint32 i) {
     else if (references[i] < 0) {
         u = -maxControl[i];
     }
-    //REPORT_ERROR_PARAMETERS(ErrorManagement::Warning, "Here 1 %f", u);
+//REPORT_ERROR_PARAMETERS(ErrorManagement::Warning, "Here 1 %f", u);
     ConvertToPwm(u, i);
 
 }
 
 void RobotArmGAM::ExecuteControlState(uint32 i,
                                       float32 dt) {
-    int32 error = (int32)(references[i] - encoders[i]);
+    int32 error = references[i] - (int32)encoders[i];
 
     int_e[i] += error * dt;
     int32 d_e = (error - errorStore[i]);
 
-    //proportional action
+//proportional action
     float32 u = (pid[0])[i] * error;
-    //integral action
+//integral action
     u += (pid[1])[i] * int_e[i];
-    //derivative action
+//derivative action
     u += (pid[2])[i] * (d_e / dt);
-    //saturation
+//saturation
     if (AbsVal(u) > maxControl[i]) {
         u = SignVal(u) * maxControl[i];
     }
-    //REPORT_ERROR_PARAMETERS(ErrorManagement::Warning, "u: %f, mc: %f", u, minControl[i]);
+//REPORT_ERROR_PARAMETERS(ErrorManagement::Warning, "u: %f, mc: %f", u, minControl[i]);
     /*if (AbsVal(u) < minControl[i]) {
-        u = 0.;
-    }*/
+     u = 0.;
+     }*/
 
     ConvertToPwm(u, i);
 
 }
 
 bool RobotArmGAM::Execute() {
-    *dirs &= ~((uint32) dirPinMask); //reset all pins
-    *dirs |= ((uint32) dirPinMask) << 16; //reset all pins
+    toUsb[0] = sentPacketNumber;
+    sentPacketNumber++;
+    toUsb[1] = *timer;
 
-    //REPORT_ERROR_PARAMETERS(ErrorManagement::Warning, "switch=%#0b", *switches);
+//REPORT_ERROR_PARAMETERS(ErrorManagement::Warning, "switch=%#0b", *switches);
     float32 dt = (float32) HighResolutionTimer::TicksToTime(HighResolutionTimer::Counter(), (uint64) tic);
+    toUsb[2] = (uint32)(dt * 1e6);
     if (fromUsb[0] >= 0) {
         references[fromUsb[0]] = fromUsb[1];
         // read from ADC
-        toUsb[0] = sentPacketNumber;
-        sentPacketNumber++;
-        toUsb[1] = *timer;
         for (uint32 i = 0u; i < numberOfMotors; i++) {
+            uint32 storeEncoder = encoders[i];
+            //this allows to treat 0-65536 and 65536-0 transitions in order to obtain 32-bit counter
+            encoders[i] = AdjustCounterDirection(encoders[i], counterDirection[i]);
+            encoders[i]=(uint32)(encoderStore[i]+(int16)(encoders[i]-encoderStore[i]));
             if (tic > 0) {
+
                 //REPORT_ERROR(ErrorManagement::Warning, "Here 0");
                 if (currentState == 0u) {
                     ExecuteBasicState(i);
@@ -373,13 +392,14 @@ bool RobotArmGAM::Execute() {
                     ExecuteControlState(i, dt);
                 }
             }
-            toUsb[i + 2] = (uint32)(dt * 1e6);
-            toUsb[i + 3] = references[i];
-            toUsb[i + 4] = (int32) encoders[i];
-            toUsb[i + 5] = (int32) pwms[i];
+            uint32 index = DiagnosticsHeader + (DiagnosticsPerMotor * i);
+            toUsb[index] = references[i];
+            toUsb[index + 1] = (int32) encoders[i];
+            toUsb[index + 2] = (int32) pwms[i];
+            encoders[i] = storeEncoder;
         }
     }
-    //change state!
+//change state!
     else {
         currentState = fromUsb[1];
         if (currentState == -1) {
@@ -395,20 +415,19 @@ bool RobotArmGAM::Execute() {
                 errorStore[i] = 0;
                 encoderStore[i] = 0;
                 pwms[i] = 0;
-                toUsb[i + 2] = (uint32)(dt * 1e6);
-                toUsb[i + 3] = references[i];
-                toUsb[i + 4] = (int32) encoders[i];
-                toUsb[i + 5] = (int32) pwms[i];
+                uint32 index = DiagnosticsHeader + (DiagnosticsPerMotor * i);
+                toUsb[index] = references[i];
+                toUsb[index + 1] = (int32)(AdjustCounterDirection(encoders[i], counterDirection[i]));
+                toUsb[index + 2] = (int32) pwms[i];
                 encoders[i] = (uint32) - 1;
-
             }
         }
 
     }
 
-    //initialise values
+//initialise values
     tic = (uint32) HighResolutionTimer::Counter();
-    //write on pwm (done by output broker)
+//write on pwm (done by output broker)
     return true;
 }
 

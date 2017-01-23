@@ -88,6 +88,7 @@ private:
     GPIO_TypeDef* sel;
     GPIO_TypeDef* reset;
     GPIO_TypeDef* byteReg;
+    TIM_HandleTypeDef* clk;
     uint8 oePin;
     uint8 selPin;
     uint8 resetPin;

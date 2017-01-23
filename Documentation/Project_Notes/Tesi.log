@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.1415926-2.5-1.40.14 (TeX Live 2013/Debian) (format=pdflatex 2014.11.10)  7 JAN 2017 12:07
+This is pdfTeX, Version 3.1415926-2.5-1.40.14 (TeX Live 2013/Debian) (format=pdflatex 2014.11.10)  10 JAN 2017 19:15
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -369,34 +369,34 @@ LaTeX Font Info:    Font shape `OMS/cmr/m/n' in size <12> not available
  [1
 
 
-])
+]
 
 Package Fancyhdr Warning: \headheight is too small (12.0pt): 
  Make it at least 14.49998pt.
  We now make it that large for the rest of the document.
  This may cause the page layout to be inconsistent, however.
 
-[2] (./Tesi.aux (./capitolo0.aux)) ) 
+[2]) [3] (./Tesi.aux (./capitolo0.aux)) ) 
 Here is how much of TeX's memory you used:
  5463 strings out of 493304
  72584 string characters out of 6139870
- 170071 words of memory out of 5000000
+ 172071 words of memory out of 5000000
  8787 multiletter control sequences out of 15000+600000
  16235 words of font info for 45 fonts, out of 8000000 for 9000
  957 hyphenation exceptions out of 8191
  38i,11n,56p,793b,397s stack positions out of 5000i,500n,10000p,200000b,80000s
-{/usr/share/texmf/fonts/enc/dvips/cm-super/
-cm-super-t1.enc}</usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/c
-msy10.pfb></usr/share/texmf/fonts/type1/public/cm-super/sfbx1200.pfb></usr/shar
-e/texmf/fonts/type1/public/cm-super/sfbx1440.pfb></usr/share/texmf/fonts/type1/
-public/cm-super/sfbx1728.pfb></usr/share/texmf/fonts/type1/public/cm-super/sfbx
-2488.pfb></usr/share/texmf/fonts/type1/public/cm-super/sfrm1095.pfb></usr/share
-/texmf/fonts/type1/public/cm-super/sfrm1200.pfb></usr/share/texmf/fonts/type1/p
-ublic/cm-super/sfti1095.pfb>
-Output written on Tesi.pdf (3 pages, 98521 bytes).
+{/usr/share/texmf/fonts/enc/dvips/cm-s
+uper/cm-super-t1.enc}</usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts
+/cm/cmsy10.pfb></usr/share/texmf/fonts/type1/public/cm-super/sfbx1200.pfb></usr
+/share/texmf/fonts/type1/public/cm-super/sfbx1440.pfb></usr/share/texmf/fonts/t
+ype1/public/cm-super/sfbx1728.pfb></usr/share/texmf/fonts/type1/public/cm-super
+/sfbx2488.pfb></usr/share/texmf/fonts/type1/public/cm-super/sfrm1095.pfb></usr/
+share/texmf/fonts/type1/public/cm-super/sfrm1200.pfb></usr/share/texmf/fonts/ty
+pe1/public/cm-super/sfti1095.pfb>
+Output written on Tesi.pdf (4 pages, 100979 bytes).
 PDF statistics:
- 47 PDF objects out of 1000 (max. 8388607)
- 33 compressed objects within 1 object stream
+ 50 PDF objects out of 1000 (max. 8388607)
+ 35 compressed objects within 1 object stream
  0 named destinations out of 1000 (max. 500000)
  1 words of extra memory for PDF output out of 10000 (max. 10000000)
 

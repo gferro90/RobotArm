@@ -18,7 +18,8 @@
   \item ADC1: five channels 2-3-4-8-9 have been activated in order to measure the current dissipated by the five motors for a further torque control.
   \item SPI1-SPI2: have been enabled in order to manage further external communications with serial encoder counters.
   \item D0-D3 pins: set as output pins have been used for OE and SEC pins for the two external encoder counters (HCTL2022 chip).
-  \item D(4,7,8,9,10,11) pins: set as output pins they have been used to set the direction of the six motors.
+  \item E7, E8 pins: RST active low reset pins for the two external encoder counters (HCTL2022 chip).
+  \item B(10,11)-D(8,9,10,11) pins: set as output pins they have been used to set the direction of the six motors.
   \item E9-E13 pins: set as input pull-up pins they have been set to read the microswitches inputs (low active).
   \item C0-C15 pins: set as input pull-up pins they have been set to read two 8-bit ports from external encoder counters (HCTL2022 chip).
   \item USART2: pins D5=Tx and D6=Rx is used as the error stream flushing error messages.
@@ -28,5 +29,16 @@
 
 \item L298N H-bridge: each one of these can be used to drive two DC motors with less than 2A continuous current. For the scorbot three of them have been used to handle the six motors. For each motor we use an output pin selecting the motor direction and a pwm signal for the motor speed. The current strategy to drive the motor is low direction pin and normal pwm for left-to-right direction and high direction pin and the opposite of pwm signal for right-to-left direction. This strategy minimizes the number of pins used to drive each motor. 
  \end{itemize}
+ 
 \subsection{Software}
+ The first developed application test aims to control a single motor of the scorbot. Thus the RobotArmGAM has been developed in order to implement the control system. The first signal is the timer (TIM6) for synchronisation with a frequency of 50 Hz. Follows the signal reading from USB in non-blocking mode the reference of the motor. Currently it receives a couple of values: the number of the motor to be controlled and the desired position in encoder steps. The third signal reads the encoder counter from the internal STM32 timer. The last input signal reads the micro switch value from an input pin.\\
+ The output signals are the motor direction pin, the pwm control signal and the diagnostics signal to be sent out to a device listening on the usb port.\\
+ The input signal used to receive the motor references can be used also to change the GAM state. In particular if the first value is -1, the second value selects the next state to be executed.
+ \begin{itemize}
+ \item 0 - basic application: if the second value is a positive number 12V will be applied to the motor, if negative -12V. Basically this state has been designed in order to move manually the robot.
+ \item 1 - home positioning. 12V will be applied to each motor until the end switch sensor becomes active because the motor has reached a fixed position.
+ \item 2 - control application. The second value specifies the desired encoder position of the motor. The parameters of a PID controller can be configured from the configuration file.
+ \item -1 - turn off the application stopping the scheduler execution. The application can be restored changing the state to one of the previous ones.
+ \end{itemize}
+ The current application sends on usb port in output reference, encoder, pwm, cycle time, ecc. On the other side a pc can be used with MARTe where the InputGAM USBDrv has been developed in order to provide a friendly user interface thanks to the HTTP interface. It is possible send the two values with desired joint position (motor number and encoder reference) to the board and each cycle the diagnostic values can be visualized in real time or stored also in matlab format.
  

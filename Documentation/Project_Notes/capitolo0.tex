@@ -12,7 +12,7 @@
 \item STM32F4-discovery
   \begin{itemize}
   \item TIM6: drives the HighResolutionTimer and can be used as a synchronisation point for the execution cycle.
-  \item TIM4-TIM9: drives the PWM generators. Four channels for TIM4 and two channels for TIM9 can handle all the six motors of the scorbot.
+  \item TIM4, TIM9: drives the PWM generators. Four channels for TIM4 and two channels for TIM9 can handle all the six motors of the scorbot.
   \item TIM1: can be used as clock source for external encoder counters. The pwm generator channel 4 has been enabled.
   \item TIM(2,3,5): have been used as internal encoder 16-bit counters with no interrupts.
   \item ADC1: five channels 2-3-4-8-9 have been activated in order to measure the current dissipated by the five motors for a further torque control.
@@ -36,9 +36,68 @@
  The input signal used to receive the motor references can be used also to change the GAM state. In particular if the first value is -1, the second value selects the next state to be executed.
  \begin{itemize}
  \item 0 - basic application: if the second value is a positive number 12V will be applied to the motor, if negative -12V. Basically this state has been designed in order to move manually the robot.
- \item 1 - home positioning. 12V will be applied to each motor until the end switch sensor becomes active because the motor has reached a fixed position.
+ \item 1 - home positioning. -12V will be applied to each motor until the end switch sensor becomes active because the motor has reached a fixed position.
  \item 2 - control application. The second value specifies the desired encoder position of the motor. The parameters of a PID controller can be configured from the configuration file.
  \item -1 - turn off the application stopping the scheduler execution. The application can be restored changing the state to one of the previous ones.
  \end{itemize}
- The current application sends on usb port in output reference, encoder, pwm, cycle time, ecc. On the other side a pc can be used with MARTe where the InputGAM USBDrv has been developed in order to provide a friendly user interface thanks to the HTTP interface. It is possible send the two values with desired joint position (motor number and encoder reference) to the board and each cycle the diagnostic values can be visualized in real time or stored also in matlab format.
+ The current application sends on usb port in output reference, encoder, pwm, cycle time, ecc. On the other side a pc can be used with MARTe where the InputGAM USBDrv has been developed in order to provide a friendly user interface thanks to the HTTP interface. It is possible send the two values with desired joint position (motor number and encoder reference) to the board and each cycle the diagnostic values can be visualized in real time or stored also in matlab format.\\
+ GAMs:
+ \begin{itemize}
+ \item RobotArmGAM: Follows the configuration parameters
+ \begin{itemize}
+ \item NumberOfMotors: the number of motors 
+ \item SwitchPinMask: the mask of input pins for the MicroSwitch sensors. We assume all these input pins belonging to the same port.
+ \item Kp: an array with the proportional gain of each motor controller.
+ \item Ki: an array with the integral gain of each motor controller.
+ \item Kd: an array with the derivative gain of each motor controller.
+ \item MaxPwm: an array the max pwm period for each motor
+ \item MinPwm: an array the min pwm period for each motor
+ \item MaxControl: an array the max control for each motor (in mV) The control will be saturated to be in [-MaxControl, -MinControl]
+ \item MinControl: an array the min control for each motor (in mV). It will be used to determine the motor control deadzone.
+ \item EndSwitchBound: how many cycles to wait before setting control to zero because of a deadzone.
+ \item MotorDirection: can be used to invert the moving direction of the motors for positive or negative voltages.
+ \item CounterDirection: should be set accordingly to motor direction in order to increment or decrement the counter when moving on what is considered positive or negative direction.
+ \end{itemize} 
+ Signals:
+ \begin{itemize}
+ \item TimerSignal (input): connected to TimerDataSource is the synchronization point currently set to 50Hz.
+ \item FromUSB (input): connected to USBCommunication reads in non-blocking mode the couple [motor number, motor reference] at each cycle.
+ \item FromEncoder1 (input): connected to EncodersCounter\_opt reads the encoders from the three internal STM counters.
+ \item FromEncoder2 (input): connected to HCTL2022 reads the encoders of the fourth motor from the external HCTL2022 encoder counter chip.
+ \item FromEncoder3 (input): connected to HCTL2022 reads the encoders of the fifth motor from the external HCTL2022 encoder counter chip.
+ \item FromMS (input): connected to GPIO reads the value in input from MicroSwitch sensors.
+ \item ToPwm (output): connected to L298N sets the pwms value and the motors pin directions.
+ \item Diagnostics (output): connected to USBCommunication writes on USB interface reference, pwm and encoder counter for each motor.
+ \end{itemize}
+  \end{itemize}
+  Some new DataSources implemented just for this project should be described:
+\begin{itemize}
+\item EncodersCounter\_opt: reads the internal encoder counters. Basically is a read from the TIM->CNT register, but has been implemented in vector mode in order to handle a group of internal counters. It must read the timer numbers from configuration.
+\item HCTL2022: handles the external counter HCTL2022 chip. Follows an example of the configuration which must be provided:
+\begin{verbatim}
+Class = HCTL2022
+OE_Port = GPIOD
+OE_Pin = 1
+SEL_Port = GPIOD
+SEL_Pin = 0
+RESET_Port = GPIOE
+RESET_Pin = 7
+CLK_Id = TIM1
+CLK_Channel = 3 
+ByteReg_Port = GPIOC
+ByteReg_Mask = 0xff
+\end{verbatim}
+note that we must set the port and pins connected to the HCTL2022 pins such as OE (low when read high otherwise), SEL (to select the byte to be read), RESET (to reset the counter), CLK (external clock to the HCTL2022) and the 8-bit pin set to read the byte one by one.
+\item L298N: handles the motor driver. Follows an example of the configuration which must be provided:
+\begin{verbatim}
+"            Class = L298N"
+"            TimIdentifiers = {4, 4, 4, 4, 9}" 
+"            Channels = {0, 1, 2, 3, 0}"
+"            DirPorts = {1, 1, 3, 3, 3}"
+"            DirPins = {10, 11, 8, 9, 10}"
+"            MaxPwm = {999, 999, 999, 999, 999}"
+\end{verbatim}
+note that we must provide the timers providing the pwm signals and the direction pins for each motor. The max pwm period is necessary in order to calculate the inverse pwm wave for the negative direction.
+\end{itemize}
+An important note is that the encoder counters are all in 16 bit, but the used type is an int32. With a trick we can obtain a 32-bit counter (int32). Basically we store an int32 encoder value and at each cycle we sum the difference. 
  

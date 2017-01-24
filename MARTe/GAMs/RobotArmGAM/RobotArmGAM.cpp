@@ -292,6 +292,7 @@ void RobotArmGAM::ConvertToPwm(float32 u,
         }
     }
     else {
+        //if it is blocked but step changes, remain blocked
         if (endSwitchCounter[i] < endSwitchBound[i]) {
             endSwitch[i] = 0;
             endSwitchCounter[i] = 0;

@@ -28,8 +28,6 @@ static int8 SignVal(float32 u) {
     return (u >= 0) ? (1) : (-1);
 }
 
-extern int8 SM_changeState;
-extern int8 SM_nextState;
 
 /*---------------------------------------------------------------------------*/
 /*                           Method definitions                              */
@@ -248,7 +246,7 @@ bool RobotArmGAM::Initialise(StructuredDataI &data) {
     return ret;
 }
 
-void RobotArmGAM::Setup() {
+bool RobotArmGAM::Setup() {
 //assign here the pointer to signals
     timer = (uint32*) GetInputSignalsMemory();
     fromUsb = (int32*) (timer + 1);
@@ -264,6 +262,7 @@ void RobotArmGAM::Setup() {
         errorStore[i] = 0;
         encoderStore[i] = 0;
     }
+    return true;
 }
 
 void RobotArmGAM::ConvertToPwm(float32 u,
@@ -403,11 +402,7 @@ bool RobotArmGAM::Execute() {
 //change state!
     else {
         currentState = fromUsb[1];
-        if (currentState == -1) {
-            SM_changeState = 1;
-            SM_nextState = -1;
-        }
-        else {
+        if (currentState != -1) {
             for (uint32 i = 0u; i < numberOfMotors; i++) {
                 references[i] = 0u;
                 int_e[i] = 0u;

@@ -27,14 +27,14 @@ OBJSX=HCTL2022.x HCTL2022Reader.x
 
 SPB =
 
-MAKEDEFAULTDIR=$(MARTE2_DIR)/MakeDefaults
+MAKEDEFAULTDIR=$(MARTe2_Embedded_Tools_DIR_BASE)/MakeDefaults
 
 include $(MAKEDEFAULTDIR)/MakeStdLibDefs.$(TARGET)
 
 BUILD_DIR=../../Build
 
 INCLUDES += -I.
-INCLUDES += -I$(FINAL_TARGET_INCLUDES)
+INCLUDES += -I$(PROJECT_CONF_INCLUDES)
 INCLUDES += -I$(MARTE2_DIR)/Source/Core/BareMetal/L0Types/
 INCLUDES += -I$(MARTE2_DIR)/Source/Core/BareMetal/L1Portability/
 INCLUDES += -I$(MARTE2_DIR)/Source/Core/BareMetal/L1Portability/Environment/FreeRTOS/
@@ -43,8 +43,8 @@ INCLUDES += -I$(MARTE2_DIR)/Source/Core/BareMetal/L3Streams/
 INCLUDES += -I$(MARTE2_DIR)/Source/Core/BareMetal/L4Configuration/
 INCLUDES += -I$(MARTE2_DIR)/Source/Core/BareMetal/L4Messages/
 INCLUDES += -I$(MARTE2_DIR)/Source/Core/BareMetal/L5GAMs/
-INCLUDES += -I$(MARTE2_TOOLS)/DataSources/TIM/
-INCLUDES += -I$(MARTE2_TOOLS)/DataSources/Encoder/
+INCLUDES += -I$(MARTe2_Embedded_Tools_DIR)/DataSources/TIM/
+INCLUDES += -I$(MARTe2_Embedded_Tools_DIR)/DataSources/Encoder/
 INCLUDES += -I$(STM_CUBE_FW_DIR)/Drivers/BSP/Components/Common/
 INCLUDES += -I$(STM_CUBE_FW_DIR)/Drivers/STM32F4xx_HAL_Driver/Inc/
 INCLUDES += -I$(STM_CUBE_FW_DIR)/Drivers/CMSIS/Device/ST/STM32F7xx/Include/

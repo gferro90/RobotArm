@@ -1,0 +1,114 @@
+#############################################################
+#
+# Copyright 2015 F4E | European Joint Undertaking for ITER 
+#  and the Development of Fusion Energy ('Fusion for Energy')
+#
+# Licensed under the EUPL, Version 1.1 or - as soon they 
+# will be approved by the European Commission - subsequent  
+# versions of the EUPL (the "Licence"); 
+# You may not use this work except in compliance with the 
+# Licence. 
+# You may obtain a copy of the Licence at: 
+#  
+# http://ec.europa.eu/idabc/eupl
+#
+# Unless required by applicable law or agreed to in 
+# writing, software distributed under the Licence is 
+# distributed on an "AS IS" basis, 
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either 
+# express or implied. 
+# See the Licence for the specific language governing 
+# permissions and limitations under the Licence. 
+#
+# $Id: Makefile.inc 3 2012-01-15 16:26:07Z aneto $
+#
+#############################################################
+
+MAKEDEFAULTDIR=$(MARTe2_Embedded_Tools_DIR_BASE)/MakeDefaults
+PROJECT_DIR=$(shell pwd)
+CFG_FILE=$(PROJECT_DIR)/Configuration/RobotArm.cfg
+SCHEDULER_NAME = BasicScheduler
+
+
+OBJSX=	startup_main.x
+
+SPB = ToolConfiguration.x GAMs/RobotArmGAM.x \
+	$(MARTe2_Embedded_Tools_DIR)/DataSources/GPIO.x \
+	$(MARTe2_Embedded_Tools_DIR)/DataSources/Encoder_opt.x \
+	$(MARTe2_Embedded_Tools_DIR)/DataSources/ADC_DMA.x \
+	$(MARTe2_Embedded_Tools_DIR)/DataSources/Externals/L298N.x \
+	$(MARTe2_Embedded_Tools_DIR)/DataSources/TimerDataSource.x \
+	$(MARTe2_Embedded_Tools_DIR)/DataSources/USBSignalDisplay.x \
+	$(MARTe2_Embedded_Tools_DIR)/DataSources/USBCommunication.x\
+	$(MARTe2_Embedded_Tools_DIR)/DataSources/Externals/HCTL2022.x\
+	$(MARTe2_Embedded_Tools_DIR)/DataSources/GenericStreamDriver.x\
+	$(MARTe2_Embedded_Tools_DIR)/Scheduler.x\
+	$(MARTe2_Embedded_Tools_DIR)/CfgUploader.x
+
+
+MAKEDEFAULTDIR=$(MARTe2_Embedded_Tools_DIR_BASE)/MakeDefaults
+include $(MAKEDEFAULTDIR)/MakeStdLibDefs.$(TARGET)
+BUILD_DIR=$(PROJECT_DIR)/Build
+CFLAGS += -D__SCHEDULER__=$(SCHEDULER_NAME)
+CFLAGS += -D__CFG__FILE__=$(CFG_FILE)
+INCLUDES += -I$(PROJECT_CONF_INCLUDES)
+INCLUDES += -I$(SCHEDULER_DIR) 
+INCLUDES += -I$(MARTe2_DIR)/Source/Core/BareMetal/L0Types/
+INCLUDES += -I$(MARTe2_DIR)/Source/Core/BareMetal/L0Types/s
+INCLUDES += -I$(MARTe2_DIR)/Source/Core/BareMetal/L1Portability/
+INCLUDES += -I$(MARTe2_DIR)/Source/Core/BareMetal/L2Objects/
+INCLUDES += -I$(MARTe2_DIR)/Source/Core/BareMetal/L3Streams/
+INCLUDES += -I$(MARTe2_DIR)/Source/Core/BareMetal/L4Configuration/
+INCLUDES += -I$(MARTe2_DIR)/Source/Core/BareMetal/L4Messages/
+INCLUDES += -I$(MARTe2_DIR)/Source/Core/BareMetal/L5GAMs/
+INCLUDES += -I$(MARTe2_DIR)/Source/Core/Scheduler/L1Portability/
+INCLUDES += -I$(MARTe2_Embedded_Tools_DIR)/Scheduler
+INCLUDES += -I$(MARTe2_Embedded_Tools_DIR)/CfgUploader/
+INCLUDES += -I$(ENVIRONMENT_BM_L1Portability_DIR)/$(ENVIRONMENT)
+INCLUDES += -I$(MARTe2_Embedded_Tools_DIR)/Streams/StreamParent
+INCLUDES += -I$(STM_CUBE_FW_DIR)/Drivers/CMSIS/Include/
+INCLUDES += -I$(STM_CUBE_FW_DIR)/Drivers/$(DRIVER_PLATFORM)_HAL_Driver/Inc/
+INCLUDES += -I$(STM_CUBE_FW_DIR)/Drivers/CMSIS/Device/ST/$(DRIVER_PLATFORM)/Include/
+INCLUDES += -I$(STM_CUBE_FW_DIR)/Drivers/$(DRIVER_PLATFORM)_HAL_Driver/Src/
+
+
+# Static project libraries
+LIBRARIES_STATIC = Build/ToolConfiguration.a
+#LIBRARIES_STATIC += Build/RobotArmGAM.a
+
+
+# Static platform libraries
+LIBRARIES_STATIC += $(MARTe2_Embedded_Tools_DIR_BASE)/Build/$(TARGET)/DataSources/TimerDataSource/TimerDataSource.a
+LIBRARIES_STATIC += $(MARTe2_Embedded_Tools_DIR_BASE)/Build/$(TARGET)/DataSources/ADC_DMA/ADC_DMADataSource.a
+LIBRARIES_STATIC += $(MARTe2_Embedded_Tools_DIR_BASE)/Build/$(TARGET)/DataSources/L298N/L298NDataSource.a
+LIBRARIES_STATIC += $(MARTe2_Embedded_Tools_DIR_BASE)/Build/$(TARGET)/DataSources/USBSignalDisplay/USBSignalDisplay.a
+LIBRARIES_STATIC += $(MARTe2_Embedded_Tools_DIR_BASE)/Build/$(TARGET)/DataSources/GPIO/GPIODataSource.a
+LIBRARIES_STATIC += $(MARTe2_Embedded_Tools_DIR_BASE)/Build/$(TARGET)/DataSources/Encoder_opt/Encoder_optDataSource.a
+LIBRARIES_STATIC += $(MARTe2_Embedded_Tools_DIR_BASE)/Build/$(TARGET)/DataSources/USBCommunication/USBCommunication.a
+LIBRARIES_STATIC += $(MARTe2_Embedded_Tools_DIR_BASE)/Build/$(TARGET)/DataSources/HCTL2022/HCTL2022DataSource.a
+LIBRARIES_STATIC += $(MARTe2_Embedded_Tools_DIR_BASE)/Build/$(TARGET)/DataSources/GenericStreamDriver/GenericStreamDriver.a
+LIBRARIES_STATIC += $(MARTe2_Embedded_Tools_DIR_BASE)/Build/$(TARGET)/Scheduler/BasicScheduler.a
+LIBRARIES_STATIC += $(MARTe2_Embedded_Tools_DIR_BASE)/Build/$(TARGET)/CfgUploader/CfgUploader.a
+
+
+# Static MARTe libraries
+LIBRARIES_STATIC += $(MARTe2_Embedded_Tools_DIR_BASE)/Build/$(TARGET)/Core/BareMetal/MARTeCoreB.a
+LIBRARIES_STATIC += $(MARTe2_Embedded_Tools_DIR_BASE)/Build/$(TARGET)/Core/Scheduler/MARTeCoreS.a
+
+
+all: update $(SUBPROJ) $(OBJS) \
+        $(BUILD_DIR)/output$(HEXEXT)\
+        $(BUILD_DIR)/output$(EXEEXT)\
+        $(BUILD_DIR)/output$(ELFEXT)
+
+
+update:
+	ls $(PROJECT_DIR)/ToolConfiguration/Makefile* || cp $(SCRIPT_DIR)/Makefile.* $(PROJECT_DIR)/ToolConfiguration
+	ls $(PROJECT_DIR)/ToolConfiguration/usbd_cdc_if_template_* || cp $(SCRIPT_DIR)/usbd_cdc_if_template_* $(PROJECT_DIR)/ToolConfiguration
+	ls $(PROJECT_DIR)/ToolConfiguration/STM32ExtractFiles.py || cp $(SCRIPT_DIR)/STM32ExtractFiles.py $(PROJECT_DIR)/ToolConfiguration
+	ls $(PROJECT_DIR)/ToolConfiguration/HandleDatabase.* || cp $(SCRIPT_DIR)/HandleDatabase.* $(PROJECT_DIR)/ToolConfiguration
+	ls $(PROJECT_DIR)/ToolConfiguration/update.sh || cp $(SCRIPT_DIR)/update.sh $(PROJECT_DIR)/ToolConfiguration
+
+
+include $(MAKEDEFAULTDIR)/MakeStdLibRules.$(TARGET)
+

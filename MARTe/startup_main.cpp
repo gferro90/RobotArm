@@ -42,190 +42,121 @@
 #include "StreamMemoryReference.h"
 #include "Threads.h"
 #include "string.h"
-#include "usbd_cdc_if.h"
+#include "CfgUploader.h"
+#include <stdio.h>
+//#include "usbd_cdc_if.h"
 
 #include INCLUDE_SCHEDULER(__SCHEDULER__)
 
 /*#include "usbd_cdc_if.h"
  #include "cmsis_os.h"*/
 using namespace MARTe;
+const char8 * const config =
+		#include INCLUDE_CFG_FILE(__CFG__FILE__)
+ ;
 
-const char8 *const config =
-#include INCLUDE_CFG_FILE(__CFG__FILE__)
-        ;
-
-//WHY???? I need this otherwise the class registered won't be linked °_°
+//WHY???? I need this otherwise the class registered won't be linked
 StreamString boh;
-int8 SM_changeState = 1;
-int8 SM_nextState = 0;
 
-extern void DebugErrorProcessFunction(const MARTe::ErrorManagement::ErrorInformation &errorInfo,
-                                      const char * const errorDescription);
+extern void DebugErrorProcessFunction(
+		const MARTe::ErrorManagement::ErrorInformation &errorInfo,
+		const char * const errorDescription);
 
 extern void PrintStack(ThreadIdentifier &tid);
-#if 0
+
 static void MARTeAppLauncher(void const *ignored) {
-    if (!USBInitialized()) {
-        USBOpen();
-    }
 
-    char buffer[64];
-    uint32 size=64;
-    USBRead(buffer, (uint32_t*)&size, 0);
-    USBSync();
+	uint32 confSize = StringHelper::Length(config) + 1;
 
-    uint32 confSize = StringHelper::Length(config) + 1;
-    ConfigurationDatabase cdb;
-    StreamMemoryReference *stream = new StreamMemoryReference(config, confSize);
-    stream->Seek(0);
-    StandardParser parser(*stream, cdb);
+	StreamMemoryReference *stream = new StreamMemoryReference(config, confSize);
+	stream->Seek(0);
 
-    bool ok = parser.Parse();
-    delete stream;
+	bool ok = true;
 
-    ObjectRegistryDatabase *godb = NULL;
-    if(ok) {
-        godb = ObjectRegistryDatabase::Instance();
-        godb->CleanUp();
-        ok = godb->Initialise(cdb);
+#ifdef _UPLOAD_CFG
+	StreamString *cfgBuffer = new StreamString;
 
-    }
+	{
+		ConfigurationDatabase localCdb;
+		StandardParser localParser(*stream, localCdb);
 
-    ReferenceT < RealTimeApplication > application;
-    if (ok) {
-        application = godb->Find("Application1");
-        ok = application.IsValid();
+		ok = localParser.Parse();
+		delete stream;
 
-    }
+		ReferenceContainer localContainer;
+		localContainer.Initialise(localCdb);
 
-    if (ok) {
-        ok = application->ConfigureApplication();
-    }
-
-    if (ok) {
-        ok = application->PrepareNextState("State1");
-    }
-
-    if (ok) {
-        application->StartExecution();
-    }
-}
+		ReferenceT < CfgUploader > cfgUploader = localContainer.Find("CfgUploader");
+		ok = cfgUploader.IsValid();
+		if (ok) {
+			cfgUploader->UploadCfg(*cfgBuffer);
+		}
+	}
+#else
+	StreamMemoryReference* cfgBuffer = stream;
 
 #endif
+	ConfigurationDatabase cdb;
 
-static void MARTeAppLauncher(void const *ignored) {
+	if (ok) {
+		cfgBuffer->Seek(0);
+		StandardParser globalParser(*cfgBuffer, cdb);
 
-    if (!USBInitialized()) {
-        USBOpen();
-    }
+		ok = globalParser.Parse();
+		//REPORT_ERROR_PARAMETERS(ErrorManagement::Warning, "Status 0 %d", ok);
+		delete cfgBuffer;
 
-    char buffer[64];
-    uint32 size = 64;
+	}
 
-    uint32 confSize = StringHelper::Length(config) + 1;
-    ConfigurationDatabase cdb;
+	ObjectRegistryDatabase *godb = NULL;
+	if (ok) {
+		godb = ObjectRegistryDatabase::Instance();
+		godb->Purge();
 
-    //TODO read the stream from serial port
-    StreamMemoryReference *stream = new StreamMemoryReference(config, confSize);
-    stream->Seek(0);
-    StandardParser parser(*stream, cdb);
+		ok = godb->Initialise(cdb);
+		//REPORT_ERROR_PARAMETERS(ErrorManagement::Warning, "Status 1 %d", ok);
 
-    bool ok = parser.Parse();
-    delete stream;
+	}
 
-    ObjectRegistryDatabase *godb = NULL;
-    godb = ObjectRegistryDatabase::Instance();
+	ReferenceT < RealTimeApplication > application;
+	if (ok) {
+		application = godb->Find("Application1");
+		ok = application.IsValid();
+		//REPORT_ERROR_PARAMETERS(ErrorManagement::Warning, "Status 2 %d", ok);
 
-    if (ok) {
-        /*for (uint32 i = 0; i < 20; i++) {
+	}
 
-            REPORT_ERROR(ErrorManagement::Warning, "before Init");
-            Sleep::MSec(100);
-        }*/
-        ok = godb->Initialise(cdb);
-    }
+	if (ok) {
+		ok = application->ConfigureApplication();
+		//REPORT_ERROR_PARAMETERS(ErrorManagement::Warning, "Status 3 %d", ok);
 
-    ReferenceT < RealTimeApplication > application;
-    if (ok) {
-        /*for (uint32 i = 0; i < 20; i++) {
+	}
 
-            REPORT_ERROR(ErrorManagement::Warning, "Init done");
-            Sleep::MSec(100);
-        }*/
-        application = godb->Find("Application1");
-        ok = application.IsValid();
+	if (ok) {
 
-    }
+		ok = application->PrepareNextState("State1");
+		//REPORT_ERROR_PARAMETERS(ErrorManagement::Warning, "Status 4 %d", ok);
 
-    if (ok) {
-         /*for (uint32 i = 0; i < 20; i++) {
+	}
 
-         REPORT_ERROR(ErrorManagement::Warning, "Before config");
-         Sleep::MSec(100);
-         }*/
-        ok = application->ConfigureApplication();
-        /*for (uint32 i = 0; i < 20; i++) {
+	if (ok) {
+		application->StartNextStateExecution();
 
-         REPORT_ERROR(ErrorManagement::Warning, "After config");
-         Sleep::MSec(100);
-         }*/
-
-    }
-
-    ReferenceContainer states;
-    if (ok) {
-        ok = application->GetStates(states);
-
-        for (;;) {
-         //   for (uint32 i = 0; i < 20; i++) {
-
-            REPORT_ERROR(ErrorManagement::Warning, "Waiting initial packet...");
-           /* Sleep::MSec(100);
-            }*/
-
-            // wait from usb the trigger
-            size = 64;
-            USBRead(buffer, (uint32_t*) &size, 0);
-            USBSync();
-            SM_nextState = 0;
-
-            REPORT_ERROR(ErrorManagement::Warning, "Go on");
-
-            while (SM_nextState >= 0) {
-                if (ok) {
-                    ok = application->PrepareNextState(states.Get(SM_nextState)->GetName());
-                }
-
-                if (ok) {
-                    SM_changeState = 0;
-                    application->StartExecution();
-                }
-            }
-            REPORT_ERROR(ErrorManagement::Warning, "OOOK!");
-        }
-    }
-
+	}
 }
+
+//char buffer[128]={0};
 extern "C" {
 
-void vApplicationStackOverflowHook(TaskHandle_t xTask,
-                                   char *pcTaskName) {
-    while (1) {
-        //	REPORT_ERROR_PARAMETERS(ErrorManagement::FatalError, "Stack overflow in task %s", pcTaskName);
-    }
-}
+void UserMainFunction(const void *arg) {
 
-void main(const void *arg) {
+	SetErrorProcessFunction(&DebugErrorProcessFunction);
 
-    SetErrorProcessFunction(&DebugErrorProcessFunction);
+	MARTeAppLauncher (NULL);
 
-    ThreadIdentifier tid = Threads::BeginThread(MARTeAppLauncher, NULL, configMINIMAL_STACK_SIZE * 16, "MARTeAppLauncher");
-
-    //Threads::BeginThread((ThreadFunctionType)PrintStack, &tid, configMINIMAL_STACK_SIZE*8);
-
-    while (1) {
-        Sleep::Sec(1.0);
-    }
+	while (1) {
+		Sleep::Sec(1.0);
+	}
 }
 }
 

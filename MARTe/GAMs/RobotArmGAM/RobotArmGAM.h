@@ -27,7 +27,7 @@ public:
 
     virtual bool Initialise(StructuredDataI &data);
 
-    virtual void Setup();
+    virtual bool Setup();
 
     virtual bool Execute();
 
